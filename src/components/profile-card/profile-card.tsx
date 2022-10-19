@@ -1,12 +1,13 @@
-import axios from "axios";
 import { useState } from "react";
 import PropTypes from "prop-types";
 import { useNavigate } from "react-router-dom";
 import image from "../../assets/profile.png";
-import { baseUrl } from "../../axios";
 import Skill from "../skill/skill";
 import styles from "./profile-card.module.css";
 import IProfileCard from "../../interfaces/wilder/IProfileCard";
+import { useMutation } from "@apollo/client";
+import { DELETE_WILDER } from "../../graphql/mutations/deleteWilder";
+import { GET_ALL_WILDERS } from "../../graphql/queries/getAllWilders";
 
 const ProfileCard = ({
   id,
@@ -16,11 +17,11 @@ const ProfileCard = ({
   avatar,
   wilderObj,
   grades,
-  setNeedUpdateAfterCreation,
   setWilderToEdit,
 }: IProfileCard) => {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [wilderNameToDelete, setWilderNameToDelete] = useState("");
+  const [deleteWilder, { data, loading, error }] = useMutation(DELETE_WILDER);
   let navigate = useNavigate();
 
   const handleSelectDelete = () => {
@@ -29,9 +30,13 @@ const ProfileCard = ({
   };
 
   const deleteConfirmation = async () => {
-    await axios.delete(`${baseUrl}/wilders/${id}`);
+    await deleteWilder({
+      variables: {
+        deleteWilderByIdId: id,
+      },
+      refetchQueries: [{ query: GET_ALL_WILDERS }],
+    });
     setDeleteConfirmOpen(false);
-    setNeedUpdateAfterCreation(true);
   };
 
   const cancelDelete = () => {
@@ -78,12 +83,12 @@ const ProfileCard = ({
         <h4>Wild Skills</h4>
         <ul className={styles.skills}>
           {grades && grades.length > 0
-            ? grades.map((grade, index) => (
+            ? grades.map((skill, index) => (
                 <Skill
                   key={index}
-                  skillId={grade.skillId}
-                  name={grade.name}
-                  grades={grade.grades}
+                  skillId={skill.skillId}
+                  name={skill.name}
+                  grades={skill.grades}
                 />
               ))
             : "No grades yet"}

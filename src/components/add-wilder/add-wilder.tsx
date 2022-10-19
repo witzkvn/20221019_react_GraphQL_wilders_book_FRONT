@@ -1,6 +1,4 @@
-import axios from "axios";
 import { useEffect, useState } from "react";
-import { baseUrl } from "../../axios";
 import { useForm, SubmitHandler } from "react-hook-form";
 import PropTypes from "prop-types";
 import styles from "./add-wilder.module.css";
@@ -10,6 +8,11 @@ import ISkill from "../../interfaces/skills/ISkill";
 import ISkillWithGrade from "../../interfaces/skills/ISkillWithGrade";
 import ISkillAvailable from "../../interfaces/skills/ISkillAvailable";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useMutation, useQuery } from "@apollo/client";
+import { UPDATE_WILDER } from "../../graphql/mutations/updateWilder";
+import { GET_ALL_WILDERS } from "../../graphql/queries/getAllWilders";
+import { CREATE_WILDER } from "../../graphql/mutations/createWilder";
+import { GET_ALL_SKILLS } from "../../graphql/queries/getAllSkills";
 
 type WilderInputs = {
   name: string;
@@ -18,14 +21,8 @@ type WilderInputs = {
   avatar: Blob[];
 };
 
-const AddWilder = ({
-  wilderToEdit,
-  setWilderToEdit,
-  setNeedUpdateAfterCreation,
-  needUpdateAfterCreation,
-}: IAddWilderForm) => {
+const AddWilder = ({ wilderToEdit, setWilderToEdit }: IAddWilderForm) => {
   const [skillsAvailable, setSkillsAvailable] = useState<ISkillAvailable[]>([]);
-  const [postError, setPostError] = useState(false);
   const [gradesAdded, setGradesAdded] = useState<ISkillWithGrade[]>([]);
   const {
     register,
@@ -34,6 +31,21 @@ const AddWilder = ({
     setValue,
     formState: { errors },
   } = useForm<WilderInputs>();
+  const [
+    updateWilder,
+    { data: updateData, loading: updateLoading, error: updateError },
+  ] = useMutation(UPDATE_WILDER);
+  const [
+    createWilder,
+    { data: createData, loading: createLoading, error: createError },
+  ] = useMutation(CREATE_WILDER);
+  const {
+    loading: skillsLoading,
+    error: skillsError,
+    data: skillsData,
+  } = useQuery(GET_ALL_SKILLS);
+
+  console.log(createError);
 
   let navigate = useNavigate();
   const location = useLocation();
@@ -56,76 +68,73 @@ const AddWilder = ({
       formData.set("file", file);
       formData.set("upload_preset", "pxyogsub");
 
-      const cloudinaryUploadResponse = await axios.post(
+      const cloudinaryUploadResponse = await fetch(
         `https://api.cloudinary.com/v1_1/${process.env.REACT_APP_CLOUDINARY_CLOUD_NAME}/image/upload`,
-        formData
+        {
+          method: "POST",
+          body: formData,
+        }
       );
 
-      imageUrl = cloudinaryUploadResponse.data.secure_url;
+      console.log(cloudinaryUploadResponse);
+      // imageUrl = cloudinaryUploadResponse
     } else if (wilderToEdit?.avatar) {
       imageUrl = wilderToEdit.avatar;
     }
 
     if (wilderToEdit !== null && wilderToEdit !== undefined) {
       // edit call
-      try {
-        const patchBody = {
-          name: data.name,
-          description: data.description,
-          city: data.city,
-          grades: gradesAdded,
-          avatar: imageUrl,
-        };
-        await axios.patch(`${baseUrl}/wilders/${wilderToEdit.id}`, patchBody);
+      const patchBody = {
+        name: data.name,
+        description: data.description,
+        city: data.city,
+        grades: gradesAdded,
+        avatar: imageUrl,
+      };
 
-        setNeedUpdateAfterCreation(true);
-        setGradesAdded([]);
-        setPostError(false);
-        reset();
-        navigate("/");
-      } catch (error) {
-        setPostError(true);
-      }
+      await updateWilder({
+        variables: patchBody,
+        refetchQueries: [{ query: GET_ALL_WILDERS }],
+      });
+
+      setGradesAdded([]);
+      reset();
+      navigate("/");
     } else {
       // create call
-      try {
-        await axios.post(`${baseUrl}/wilders`, {
+      const createBody = {
+        data: {
           name: data.name,
-          description: data.description,
           city: data.city,
-          grades: gradesAdded,
+          description: data.description,
           avatar: imageUrl,
-        });
+          grades: gradesAdded,
+        },
+      };
+      await createWilder({
+        variables: createBody,
+        refetchQueries: [{ query: GET_ALL_WILDERS }],
+      });
 
-        setNeedUpdateAfterCreation(true);
-        setGradesAdded([]);
-        reset();
-        setPostError(false);
-        navigate("/");
-      } catch (error) {
-        setPostError(true);
-      }
+      setGradesAdded([]);
+      reset();
+      navigate("/");
     }
   };
 
   useEffect(() => {
-    const getSkillsAvailable = async () => {
-      const res = await axios.get(`${baseUrl}/skills`);
-
-      if (res.data.skills) {
-        const skillsState = res.data.skills.map((skill: ISkill) => {
-          return {
-            id: skill.id,
-            name: skill.name,
-            selected: false,
-            grades: 0,
-          };
-        });
-        setSkillsAvailable(skillsState);
-      }
-    };
-    getSkillsAvailable();
-  }, [needUpdateAfterCreation]);
+    if (!skillsLoading && skillsData.getAllSkills) {
+      const skillsState = skillsData.getAllSkills.map((skill: ISkill) => {
+        return {
+          id: skill.id,
+          name: skill.name,
+          selected: false,
+          grades: 0,
+        };
+      });
+      setSkillsAvailable(skillsState);
+    }
+  }, [skillsData, skillsError]);
 
   useEffect(() => {
     if (wilderToEdit === null || wilderToEdit === undefined) {
@@ -157,7 +166,7 @@ const AddWilder = ({
         return [
           ...prev,
           {
-            skillId: skillId,
+            skillId,
             name: skillName,
             grades,
           },
@@ -262,7 +271,7 @@ const AddWilder = ({
             the form.
           </span>
         )}
-        {postError && (
+        {(updateError || createError) && (
           <span className="error">
             An error occured while sending the form. Please try again.
           </span>

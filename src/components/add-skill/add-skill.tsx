@@ -1,16 +1,14 @@
-import axios from "axios";
-import { useState } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
-import { baseUrl } from "../../axios";
 import { useNavigate } from "react-router-dom";
-import IAddSkillForm from "../../interfaces/form/IAddSkillForm";
+import { useMutation } from "@apollo/client";
+import { ADD_SKILL } from "../../graphql/mutations/addSkill";
+import { GET_ALL_SKILLS } from "../../graphql/queries/getAllSkills";
 
 type SkillInputs = {
   name: string;
 };
 
-const AddSkill = ({ setNeedUpdateAfterCreation }: IAddSkillForm) => {
-  const [postError, setPostError] = useState(false);
+const AddSkill = () => {
   const {
     register,
     handleSubmit,
@@ -18,19 +16,15 @@ const AddSkill = ({ setNeedUpdateAfterCreation }: IAddSkillForm) => {
     formState: { errors },
   } = useForm<SkillInputs>();
   let navigate = useNavigate();
+  const [addSkill, { data, loading, error }] = useMutation(ADD_SKILL);
 
   const onSubmit: SubmitHandler<SkillInputs> = async (data) => {
-    try {
-      await axios.post(`${baseUrl}/skills`, {
-        name: data,
-      });
-      setPostError(false);
-      reset();
-      setNeedUpdateAfterCreation(true);
-      navigate("/");
-    } catch (error) {
-      setPostError(true);
-    }
+    await addSkill({
+      variables: { name: data },
+      refetchQueries: [{ query: GET_ALL_SKILLS }],
+    });
+    reset();
+    navigate("/");
   };
 
   return (
@@ -45,7 +39,7 @@ const AddSkill = ({ setNeedUpdateAfterCreation }: IAddSkillForm) => {
         {Object.keys(errors).length !== 0 && (
           <span className="error">This field is required</span>
         )}
-        {postError && (
+        {error && (
           <span className="error">
             An error occured while sending the data to the server.
           </span>

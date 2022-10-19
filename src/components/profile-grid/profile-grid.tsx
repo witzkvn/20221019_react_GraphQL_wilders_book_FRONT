@@ -2,11 +2,7 @@ import React from "react";
 import IWildersGrid from "../../interfaces/wilder/IWildersGrid";
 import ProfileCard from "../profile-card/profile-card";
 
-const ProfileGrid = ({
-  wilders,
-  setNeedUpdateAfterCreation,
-  setWilderToEdit,
-}: IWildersGrid) => {
+const ProfileGrid = ({ wilders, setWilderToEdit }: IWildersGrid) => {
   return (
     <>
       <h2>Wilders</h2>
@@ -22,7 +18,6 @@ const ProfileGrid = ({
                 description={wilder.description}
                 grades={wilder.grades}
                 wilderObj={wilder}
-                setNeedUpdateAfterCreation={setNeedUpdateAfterCreation}
                 setWilderToEdit={setWilderToEdit}
               />
             ))
