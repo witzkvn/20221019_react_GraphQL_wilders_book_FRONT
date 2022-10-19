@@ -83,12 +83,12 @@ const ProfileCard = ({
         <h4>Wild Skills</h4>
         <ul className={styles.skills}>
           {grades && grades.length > 0
-            ? grades.map((skill, index) => (
+            ? grades.map((grade, index) => (
                 <Skill
                   key={index}
-                  skillId={skill.skillId}
-                  name={skill.name}
-                  grades={skill.grades}
+                  skillId={grade.skill.id}
+                  name={grade.skill.name}
+                  grade={grade.grade}
                 />
               ))
             : "No grades yet"}

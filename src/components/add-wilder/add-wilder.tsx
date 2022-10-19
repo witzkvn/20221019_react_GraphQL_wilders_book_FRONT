@@ -45,8 +45,6 @@ const AddWilder = ({ wilderToEdit, setWilderToEdit }: IAddWilderForm) => {
     data: skillsData,
   } = useQuery(GET_ALL_SKILLS);
 
-  console.log(createError);
-
   let navigate = useNavigate();
   const location = useLocation();
 
@@ -76,7 +74,7 @@ const AddWilder = ({ wilderToEdit, setWilderToEdit }: IAddWilderForm) => {
         }
       );
 
-      console.log(cloudinaryUploadResponse);
+      console.log(cloudinaryUploadResponse); // TODO cloudinary get url
       // imageUrl = cloudinaryUploadResponse
     } else if (wilderToEdit?.avatar) {
       imageUrl = wilderToEdit.avatar;
@@ -134,7 +132,7 @@ const AddWilder = ({ wilderToEdit, setWilderToEdit }: IAddWilderForm) => {
       });
       setSkillsAvailable(skillsState);
     }
-  }, [skillsData, skillsError]);
+  }, [skillsData, skillsError, skillsLoading]);
 
   useEffect(() => {
     if (wilderToEdit === null || wilderToEdit === undefined) {
@@ -146,11 +144,20 @@ const AddWilder = ({ wilderToEdit, setWilderToEdit }: IAddWilderForm) => {
       wilderToEdit.city
         ? setValue("city", wilderToEdit.city)
         : setValue("city", "");
-      setGradesAdded(wilderToEdit.grades);
+      const formattedGrades: ISkillWithGrade[] = wilderToEdit.grades.map(
+        (grade) => {
+          return {
+            skillId: grade.skill.id,
+            name: grade.skill.name,
+            grade: grade.grade,
+          };
+        }
+      );
+      setGradesAdded(formattedGrades);
     }
   }, [reset, setValue, wilderToEdit]);
 
-  const handleAddSkill = (skillId: number, grades: number) => {
+  const handleAddSkill = (skillId: number, grade: number) => {
     const isSkillAlreadySet = gradesAdded.some(
       (skill) => skill.skillId === skillId
     );
@@ -168,7 +175,7 @@ const AddWilder = ({ wilderToEdit, setWilderToEdit }: IAddWilderForm) => {
           {
             skillId,
             name: skillName,
-            grades,
+            grade,
           },
         ];
       });
@@ -244,7 +251,7 @@ const AddWilder = ({ wilderToEdit, setWilderToEdit }: IAddWilderForm) => {
               {gradesAdded.map((skill, index) => (
                 <div key={index} className={styles.skillInput}>
                   <p>
-                    {skill.name} {skill.grades}/10
+                    {skill.name} {skill.grade}/10
                   </p>
                   <button
                     className="button whiteBtn"

@@ -1,4 +1,4 @@
-import ISkillWithGrade from "../skills/ISkillWithGrade";
+import IGradeFromDb from "../skills/ISkillWithGradeFromDb";
 
 export default interface IWilderFromDb {
   id: number;
@@ -6,5 +6,5 @@ export default interface IWilderFromDb {
   description: string;
   name: string;
   avatar?: string;
-  grades: ISkillWithGrade[];
+  grades: IGradeFromDb[];
 }
