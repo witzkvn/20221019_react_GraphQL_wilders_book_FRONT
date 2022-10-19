@@ -13,6 +13,7 @@ import { UPDATE_WILDER } from "../../graphql/mutations/updateWilder";
 import { GET_ALL_WILDERS } from "../../graphql/queries/getAllWilders";
 import { CREATE_WILDER } from "../../graphql/mutations/createWilder";
 import { GET_ALL_SKILLS } from "../../graphql/queries/getAllSkills";
+import setGradesAddedToGradeInput from "../../utils/gradesAddedToGradeInput";
 
 type WilderInputs = {
   name: string;
@@ -82,13 +83,22 @@ const AddWilder = ({ wilderToEdit, setWilderToEdit }: IAddWilderForm) => {
 
     if (wilderToEdit !== null && wilderToEdit !== undefined) {
       // edit call
+      const formattedGrades = setGradesAddedToGradeInput(
+        gradesAdded,
+        wilderToEdit.id
+      );
       const patchBody = {
-        name: data.name,
-        description: data.description,
-        city: data.city,
-        grades: gradesAdded,
-        avatar: imageUrl,
+        data: {
+          name: data.name,
+          description: data.description,
+          city: data.city,
+          grades: formattedGrades,
+          avatar: imageUrl,
+        },
+        updateWilderId: wilderToEdit.id,
       };
+
+      console.log(patchBody);
 
       await updateWilder({
         variables: patchBody,
@@ -100,15 +110,19 @@ const AddWilder = ({ wilderToEdit, setWilderToEdit }: IAddWilderForm) => {
       navigate("/");
     } else {
       // create call
+      const formattedGrades = setGradesAddedToGradeInput(gradesAdded);
       const createBody = {
         data: {
           name: data.name,
           city: data.city,
           description: data.description,
           avatar: imageUrl,
-          grades: gradesAdded,
+          grades: formattedGrades,
         },
       };
+
+      console.log(createBody);
+
       await createWilder({
         variables: createBody,
         refetchQueries: [{ query: GET_ALL_WILDERS }],

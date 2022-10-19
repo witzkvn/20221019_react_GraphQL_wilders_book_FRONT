@@ -9,8 +9,10 @@ export const GET_ALL_WILDERS = gql`
       description
       avatar
       grades {
+        id
         grade
         skill {
+          id
           name
         }
       }
