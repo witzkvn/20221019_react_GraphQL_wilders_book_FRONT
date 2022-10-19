@@ -74,9 +74,9 @@ const AddWilder = ({ wilderToEdit, setWilderToEdit }: IAddWilderForm) => {
           body: formData,
         }
       );
+      const res = await cloudinaryUploadResponse.json();
 
-      console.log(cloudinaryUploadResponse); // TODO cloudinary get url
-      // imageUrl = cloudinaryUploadResponse
+      imageUrl = res.secure_url;
     } else if (wilderToEdit?.avatar) {
       imageUrl = wilderToEdit.avatar;
     }
@@ -98,8 +98,6 @@ const AddWilder = ({ wilderToEdit, setWilderToEdit }: IAddWilderForm) => {
         updateWilderId: wilderToEdit.id,
       };
 
-      console.log(patchBody);
-
       await updateWilder({
         variables: patchBody,
         refetchQueries: [{ query: GET_ALL_WILDERS }],
@@ -120,8 +118,6 @@ const AddWilder = ({ wilderToEdit, setWilderToEdit }: IAddWilderForm) => {
           grades: formattedGrades,
         },
       };
-
-      console.log(createBody);
 
       await createWilder({
         variables: createBody,
