@@ -20,7 +20,7 @@ const AddSkill = () => {
 
   const onSubmit: SubmitHandler<SkillInputs> = async (data) => {
     await addSkill({
-      variables: { name: data },
+      variables: { name: data.name },
       refetchQueries: [{ query: GET_ALL_SKILLS }],
     });
     reset();
